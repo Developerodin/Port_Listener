@@ -1,0 +1,36 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+[Pp]ublish/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+
+# NuGet
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+
+# .NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Large / generated data (optional: remove if you want to track scale_data.json)
+# data/scale_data.json
+# bin/**/scale_data.json
