@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Software\\Port Listener\\Port Listener\\scale test\\ScaleSimulator.csproj",
+      "projectUniqueName": "F:\\Ecommerce\\Port_Listener\\Port_Listener\\scale test\\ScaleSimulator.csproj",
       "projectName": "ScaleSimulator",
-      "projectPath": "D:\\Software\\Port Listener\\Port Listener\\scale test\\ScaleSimulator.csproj",
+      "projectPath": "F:\\Ecommerce\\Port_Listener\\Port_Listener\\scale test\\ScaleSimulator.csproj",
       "packagesPath": "C:\\Users\\USER\\.nuget\\packages\\",
-      "outputPath": "D:\\Software\\Port Listener\\Port Listener\\scale test\\obj\\",
+      "outputPath": "F:\\Ecommerce\\Port_Listener\\Port_Listener\\scale test\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\USER\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -65,7 +65,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",

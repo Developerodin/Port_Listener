@@ -40,3 +40,18 @@ D:\Software\Port Listener\Port Listener\scale test\obj\Debug\net10.0\refint\Scal
 D:\Software\Port Listener\Port Listener\scale test\obj\Debug\net10.0\ScaleSimulator.pdb
 D:\Software\Port Listener\Port Listener\scale test\obj\Debug\net10.0\ScaleSimulator.genruntimeconfig.cache
 D:\Software\Port Listener\Port Listener\scale test\obj\Debug\net10.0\ref\ScaleSimulator.dll
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\bin\Debug\net10.0\ScaleSimulator.exe
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\bin\Debug\net10.0\ScaleSimulator.deps.json
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\bin\Debug\net10.0\ScaleSimulator.runtimeconfig.json
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\bin\Debug\net10.0\ScaleSimulator.dll
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\bin\Debug\net10.0\ScaleSimulator.pdb
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\obj\Debug\net10.0\ScaleSimulator.GeneratedMSBuildEditorConfig.editorconfig
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\obj\Debug\net10.0\ScaleSimulator.AssemblyInfoInputs.cache
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\obj\Debug\net10.0\ScaleSimulator.AssemblyInfo.cs
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\obj\Debug\net10.0\ScaleSimulator.csproj.CoreCompileInputs.cache
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\obj\Debug\net10.0\ScaleSimulator.sourcelink.json
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\obj\Debug\net10.0\ScaleSimulator.dll
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\obj\Debug\net10.0\refint\ScaleSimulator.dll
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\obj\Debug\net10.0\ScaleSimulator.pdb
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\obj\Debug\net10.0\ScaleSimulator.genruntimeconfig.cache
+F:\Ecommerce\Port_Listener\Port_Listener\scale test\obj\Debug\net10.0\ref\ScaleSimulator.dll

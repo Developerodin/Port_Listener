@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Software\\Port Listener\\Port Listener\\PortListener.csproj",
+      "projectUniqueName": "F:\\Ecommerce\\Port_Listener\\Port_Listener\\PortListener.csproj",
       "projectName": "PortListener",
-      "projectPath": "D:\\Software\\Port Listener\\Port Listener\\PortListener.csproj",
+      "projectPath": "F:\\Ecommerce\\Port_Listener\\Port_Listener\\PortListener.csproj",
       "packagesPath": "C:\\Users\\USER\\.nuget\\packages\\",
-      "outputPath": "D:\\Software\\Port Listener\\Port Listener\\obj\\",
+      "outputPath": "F:\\Ecommerce\\Port_Listener\\Port_Listener\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\USER\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -68,7 +68,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

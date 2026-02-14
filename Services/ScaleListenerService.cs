@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using PortListener.Services;
 
@@ -11,9 +12,13 @@ public class ScaleListenerService : BackgroundService
     private readonly IWeightStorageService _weightStorage;
     private readonly ILogger<ScaleListenerService> _logger;
 
-    // Only accept data from this sender IP
-    private readonly IPAddress _allowedSenderIP = IPAddress.Parse("127.0.0.1");
-    private readonly int _tcpPort = 3666;
+    // Only accept data from this sender IP and port
+    private readonly IPAddress _allowedSenderIP = IPAddress.Parse("192.168.0.199");
+    private readonly int _allowedSenderPort = 5001;
+    private readonly int _udpPort = 3666;
+    
+    private const string JsonFilePath = "data/scale_data.json";
+    private readonly object _fileLock = new object();
 
     public ScaleListenerService(
         IWeightStorageService weightStorage,
@@ -21,148 +26,103 @@ public class ScaleListenerService : BackgroundService
     {
         _weightStorage = weightStorage;
         _logger = logger;
+        
+        // Ensure data directory exists
+        Directory.CreateDirectory("data");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        TcpListener? listener = null;
+        UdpClient? udp = null;
         try
         {
-            listener = new TcpListener(IPAddress.Any, _tcpPort);
-            listener.Start();
+            // Use Socket directly to enable ReuseAddress
+            udp = new UdpClient();
+            udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+            udp.Client.Bind(new IPEndPoint(IPAddress.Any, _udpPort));
 
-            _logger.LogInformation("Listening on TCP port {Port}...", _tcpPort);
-            _logger.LogInformation("Only accepting connections from: {IP}", _allowedSenderIP);
+            _logger.LogInformation("Listening on UDP port {Port}...", _udpPort);
+            _logger.LogInformation("Only accepting data from: {IP}:{Port}", _allowedSenderIP, _allowedSenderPort);
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    // Accept TCP connection - cancellation is handled by checking the token
-                    var acceptTask = listener.AcceptTcpClientAsync();
-                    var cancellationTask = Task.Delay(Timeout.Infinite, stoppingToken);
-                    
-                    var completedTask = await Task.WhenAny(acceptTask, cancellationTask);
-                    if (completedTask == cancellationTask)
-                    {
-                        // Cancellation requested, break out of loop
-                        break;
-                    }
-                    
-                    var client = await acceptTask;
-                    var clientEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
+                    var result = await udp.ReceiveAsync(stoppingToken);
+                    var ep = result.RemoteEndPoint;
+                    byte[] data = result.Buffer;
 
-                    // Filter: Only accept connections from the allowed sender IP
-                    if (clientEndPoint == null || !clientEndPoint.Address.Equals(_allowedSenderIP))
+                    string text = Encoding.ASCII.GetString(data).Split('\0')[0].Trim();
+                    
+                    _logger.LogDebug("[DEBUG] Received packet from {Address}:{Port}", ep.Address, ep.Port);
+                    _logger.LogDebug("[DEBUG] Raw Content: \"{Content}\"", text);
+
+                    // Filter: Only accept data from the allowed sender IP and port
+                    if (!ep.Address.Equals(_allowedSenderIP) || ep.Port != _allowedSenderPort)
                     {
-                        _logger.LogDebug(
-                            "Rejected connection from {Address}:{Port} (only accepting from {AllowedIP})",
-                            clientEndPoint?.Address, clientEndPoint?.Port, _allowedSenderIP);
-                        client.Close();
+                        _logger.LogWarning("Rejected packet from {Address}:{Port} (only accepting from {AllowedIP}:{AllowedPort})",
+                            ep.Address, ep.Port, _allowedSenderIP, _allowedSenderPort);
                         continue;
                     }
 
-                    _logger.LogInformation("Accepted TCP connection from {Address}:{Port}", 
-                        clientEndPoint.Address, clientEndPoint.Port);
+                    // Extract weight value from message (format: "1.282KG")
+                    string? weight = ExtractWeight(text);
+                    
+                    if (weight == null)
+                    {
+                        _logger.LogWarning("Could not extract weight from message: \"{Message}\"", text);
+                    }
 
-                    // Process connection in background (don't await to allow multiple connections)
-                    _ = Task.Run(async () => await ProcessTcpClientAsync(client, stoppingToken), stoppingToken);
+                    // Create data object
+                    var dataEntry = new WeightData
+                    {
+                        Timestamp = DateTime.Now,
+                        Message = text,
+                        Weight = weight != null ? double.Parse(weight) : null,
+                        WeightUnit = "kg"
+                    };
+
+                    // Update in-memory storage
+                    _weightStorage.UpdateWeight(dataEntry);
+
+                    // Save to JSON file (JSONL format)
+                    string json = JsonSerializer.Serialize(dataEntry);
+                    lock (_fileLock)
+                    {
+                        File.AppendAllText(JsonFilePath, json + Environment.NewLine);
+                    }
+
+                    _logger.LogInformation("✅ Processed Message: {Message}", text);
+                    if (weight != null)
+                    {
+                        _logger.LogInformation("⚖️  Extracted Weight: {Weight} kg", weight);
+                    }
                 }
-                catch (SocketException ex)
+                catch (OperationCanceledException)
                 {
-                    _logger.LogError(ex, "Socket error while accepting TCP connection");
-                    await Task.Delay(1000, stoppingToken);
+                    break;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error accepting TCP connection");
+                    _logger.LogError(ex, "Error processing UDP packet");
                     await Task.Delay(1000, stoppingToken);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Fatal error in ScaleListenerService");
+            _logger.LogCritical(ex, "Fatal error in ScaleListenerService");
         }
         finally
         {
-            listener?.Stop();
-        }
-    }
-
-    private async Task ProcessTcpClientAsync(TcpClient client, CancellationToken cancellationToken)
-    {
-        try
-        {
-            using (client)
-            using (var stream = client.GetStream())
-            {
-                var buffer = new byte[1024];
-                
-                while (!cancellationToken.IsCancellationRequested && client.Connected)
-                {
-                    try
-                    {
-                        // Read data from TCP stream
-                        int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
-                        
-                        if (bytesRead == 0)
-                        {
-                            // Connection closed by client
-                            break;
-                        }
-
-                        string text = Encoding.ASCII.GetString(buffer, 0, bytesRead).Split('\0')[0].Trim();
-
-                        if (string.IsNullOrWhiteSpace(text))
-                        {
-                            continue;
-                        }
-
-                        // Extract weight value from message (format: RTW:0.650 kg)
-                        string? weight = ExtractWeight(text);
-
-                        // Create data object
-                        var dataEntry = new WeightData
-                        {
-                            Timestamp = DateTime.Now,
-                            Message = text,
-                            Weight = weight != null ? double.Parse(weight) : null,
-                            WeightUnit = "kg"
-                        };
-
-                        // Update in-memory storage
-                        _weightStorage.UpdateWeight(dataEntry);
-
-                        _logger.LogInformation("Message: {Message}", text);
-                        if (weight != null)
-                        {
-                            _logger.LogInformation("Weight: {Weight} kg", weight);
-                        }
-                    }
-                    catch (IOException ex)
-                    {
-                        _logger.LogWarning(ex, "Connection closed or error reading from stream");
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error processing TCP data");
-                        await Task.Delay(1000, cancellationToken);
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing TCP client");
+            udp?.Close();
         }
     }
 
     private static string? ExtractWeight(string message)
     {
-        // Match pattern like "RTW:0.650 kg" or similar formats
-        var match = Regex.Match(message, @"RTW:([\d.]+)\s*kg", RegexOptions.IgnoreCase);
+        // Support format like "RTW:0.650 kg" or "1.282KG"
+        var match = Regex.Match(message, @"(?:RTW:)?([\d.]+)\s*(?:kg|KG)", RegexOptions.IgnoreCase);
         if (match.Success && match.Groups.Count > 1)
         {
             return match.Groups[1].Value;

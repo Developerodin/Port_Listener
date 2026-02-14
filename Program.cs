@@ -9,15 +9,15 @@ builder.Services.AddEndpointsApiExplorer();
 // Register in-memory weight storage service
 builder.Services.AddSingleton<IWeightStorageService, WeightStorageService>();
 
-// Register background service for TCP listener
+// Register background service for UDP listener
 builder.Services.AddHostedService<ScaleListenerService>();
 
-// Configure CORS for Next.js frontend
+// Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowNextJs", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.AllowAnyOrigin()
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -26,9 +26,27 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-app.UseCors("AllowNextJs");
+app.UseCors("AllowAll");
 app.UseAuthorization();
 app.MapControllers();
+
+// Add a specific endpoint to return the raw scale data from file (as previous script did)
+app.MapGet("/api/data", async (HttpContext context) =>
+{
+    const string jsonFilePath = "data/scale_data.json";
+    if (File.Exists(jsonFilePath))
+    {
+        string fileContent = await File.ReadAllTextAsync(jsonFilePath);
+        var lines = fileContent.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .ToList();
+            
+        // Convert JSONL to JSON Array
+        return Results.Content("[" + string.Join(",", lines) + "]", "application/json");
+    }
+    return Results.Content("[]", "application/json");
+});
 
 // Configure to run on localhost:7001
 app.Urls.Add("http://localhost:7001");
